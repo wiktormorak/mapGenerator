@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 591e5c3e2194bb0ada3c0d17abd8af46, type: 3}
+  m_Name: ForestBiome
+  m_EditorClassIdentifier: 
+  biomeDebugColor: {r: 0, g: 0, b: 0, a: 0}
+  biomeName: Forest
+  rarityPercent: 0
+  biomeSpawnData:
+    biomeName: forest
+    minChanceSpawn: -0.25
+    maxChanceSpawn: 0.05
+    minHeight: 0
+    maxHeight: 0
+    maxBiomeSize: 250
+  tileMaterial: {fileID: 2100000, guid: d09a835956ebb775a88e66e57acc0485, type: 2}
+  allowsLand: 1
+  allowsMountains: 0
+  allowsIslands: 0
+  allowsContinental: 0
+  allowsSandyBeaches: 0
+  allowsRockyBeaches: 1
+  allowsVegetation: 1
+  allowsWaterBodies: 1
+  allowsPonds: 1
+  allowsRivers: 0
+  allowsLakes: 0
+  allowsOceans: 0
+  treeDensityPercent: 40
+  vegetation: []
+  temperature: 0
+  humidity: 0
+  rainfall: 0
+  windSpeed: 0
