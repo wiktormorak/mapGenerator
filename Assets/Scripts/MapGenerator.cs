@@ -154,6 +154,10 @@ public class MapGenerator : MonoBehaviour
                 }
                 bool chunkOffset = (chunkColumn & 1) == 1;
                 GenerateChunk(chunkParent, chunkOffset, cIndex);
+                if (cIndex == 0){
+                    chunkParent.GetComponent<ChunkData>().chunkBiome = initialBiome;
+                    SetChunkTileMaterial(chunkParent, initialBiome);
+                }
                 chunkParent.transform.position = new Vector3(chunkSize.x + (ChunkXConstant * chunkRow), 0f, chunkSize.z + (ChunkZConstant * chunkColumn));
                 cIndex++;
                 chunksToProcess--;
