@@ -10,5 +10,5 @@ Planned Features:
 
 Existing Features:
 
-- Base generation.
+- Basic map generation.
 - Detailed and customisable biomes.
