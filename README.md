@@ -1,4 +1,4 @@
-This is my hexagonal tile map generator.
+This is a 3D hexagonal tile map generator which includes plenty of features such as detailed biomes with bodies of water and more.
 
 Planned Features:
 
