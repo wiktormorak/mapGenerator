@@ -22,7 +22,7 @@ MonoBehaviour:
     minHeight: 0
     maxHeight: 0
     maxBiomeSize: 400
-  tileMaterial: {fileID: 2100000, guid: 0b5c28386cde85aaf9308d45023cb48c, type: 2}
+    tileMaterial: {fileID: 2100000, guid: 0b5c28386cde85aaf9308d45023cb48c, type: 2}
   allowsLand: 1
   allowsMountains: 1
   allowsIslands: 0

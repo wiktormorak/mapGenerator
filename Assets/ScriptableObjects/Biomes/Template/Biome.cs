@@ -11,7 +11,6 @@ public class Biome : ScriptableObject
     public string biomeName;
     public int rarityPercent;
     public BiomeSpawnData biomeSpawnData;
-    public Material tileMaterial;
     
     [System.Serializable]
     public struct BiomeSpawnData
@@ -22,6 +21,7 @@ public class Biome : ScriptableObject
         public float minHeight;
         public float maxHeight;
         public int maxBiomeSize;
+        public Material tileMaterial;
     }
 
     [Header("Land Configuration")]
