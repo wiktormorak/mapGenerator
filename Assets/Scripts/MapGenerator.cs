@@ -54,15 +54,15 @@ public class MapGenerator : MonoBehaviour
     public List<Biome> biomes;
     public List<Biome.BiomeSpawnData> biomeSpawnData;
     private float cachedTemperature;
-    public float lastTemperature;
-    public float minimumBiomeTemperature;
-    public float maximumBiomeTemperature;
-    public Biome initialBiome;
-    private Biome cachedBiome;
-    public Biome currentBiome;
-    public Material currentBiomeMaterial;
-    public int currentBiomeMaxSize;
-    public float biomeSpawnRandom;
+    private float lastTemperature;
+    private float minimumBiomeTemperature;
+    private float maximumBiomeTemperature;
+    private Biome initialBiome;
+    private Biome lastBiome;
+    private Biome currentBiome;
+    private Material currentBiomeMaterial;
+    private int currentBiomeMaxSize;
+    private float biomeSpawnRandom;
     #endregion
     #region Unity Methods & Un-Important
     void Start()
@@ -252,7 +252,7 @@ public class MapGenerator : MonoBehaviour
         return null;
     }
     void SetChunkTileMaterial(GameObject chunk) {
-        foreach (Transform child in chunk.transform){
+        foreach (Transform child in chunk.transform) {
             child.GetComponent<Renderer>().material = currentBiomeMaterial;
         }
     }
@@ -262,12 +262,14 @@ public class MapGenerator : MonoBehaviour
     Biome GetNextBiome(GameObject chunk) {
         float divider = Random.Range(0f, 1f);
         lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider) );
-        for (int i = 0; i < biomeSpawnData.Count; i++){
+        for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
             if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
-                currentBiome = biomes[i];
+                minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
+                maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
                 currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
                 currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
+                currentBiome = biomes[i];
                 return currentBiome;
             }
         }
