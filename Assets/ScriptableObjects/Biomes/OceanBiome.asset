@@ -18,7 +18,7 @@ MonoBehaviour:
   biomeSpawnData:
     biomeName: ocean
     minChanceSpawn: 0.36
-    maxChanceSpawn: 0.5589
+    maxChanceSpawn: 0.56
     minHeight: 0
     maxHeight: 0
     maxBiomeSize: 2000

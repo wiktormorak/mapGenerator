@@ -7,8 +7,8 @@ public class MapGenerator : MonoBehaviour
 {
     const float XConstant = 0.01716f;
     const float ZConstant = 0.01483f;
-    const float ChunkXConstant = 2.575f;
-    const float ChunkZConstant = 2.225f;
+    const float ChunkXConstant = 0.515f;
+    const float ChunkZConstant = 0.445f;
     [Header("Prefab Configuration")]
     #region Prefab Configuration
     public GameObject tilePrefab;
@@ -17,6 +17,7 @@ public class MapGenerator : MonoBehaviour
     public Vector2 tilePadding;
     public float tileDistanceXAxis;
     public float tileDistanceZAxis;
+    
     #endregion
     [Header("Map Configuration")]
     #region Configuration Variables
@@ -26,6 +27,8 @@ public class MapGenerator : MonoBehaviour
     public Vector3 mapSizeInChunks;
     public int seed;
     public ChunkDetail chunkDetail;
+    public float chunkDistanceXAxis;
+    public float chunkDistanceZAxis;
     #endregion
     [Header("Map Data")]
     #region Map Data
@@ -95,6 +98,8 @@ public class MapGenerator : MonoBehaviour
         tileDistanceZAxis = FindTileGapZAxis(tileSize.x);
         GetMapSize();
         GetChunkDetailPercent();
+        chunkDistanceXAxis = FindChunkGapXAxis(chunkSize.x);
+        chunkDistanceZAxis = FindChunkGapZAxis(chunkSize.z);
         GetTotalChunks();
         mapSizeInChunks = new Vector3(Mathf.Round((mapSize.x / chunkSize.x)), Mathf.Round((mapSize.y / chunkSize.y)), Mathf.Round((mapSize.z / chunkSize.z)));
         chunksToProcess += totalChunks;
@@ -145,6 +150,14 @@ public class MapGenerator : MonoBehaviour
         float tileGap = (size * ZConstant);
         return tileGap;
     }
+    float FindChunkGapXAxis(float size) {
+        float chunkGap = (size * ChunkXConstant);
+        return chunkGap;
+    }
+    float FindChunkGapZAxis(float size) {
+        float chunkGap = (size * ChunkZConstant);
+        return chunkGap;
+    }
     #endregion
     #region Chunk Generation Methods
     GameObject CreateChunkGameObject(int index) {
@@ -166,7 +179,6 @@ public class MapGenerator : MonoBehaviour
                 Biome chunkBiome = GetNextBiome(chunkParent);
                 chunkParent.name = lastTemperature.ToString();
                 SetChunkBiome(chunkParent,  chunkBiome);
-                //SetChunkParent(chunkParent);
                 chunkRow++;
                 #region Change Column
                 if (Mathf.Approximately(chunkRow, mapSizeInChunks.x)){
@@ -180,7 +192,6 @@ public class MapGenerator : MonoBehaviour
                     chunkParent.GetComponent<ChunkData>().chunkBiome = initialBiome;
                     SetChunkTileMaterial(chunkParent);
                 }
-                // chunkParent.GetComponent<ChunkData>().chunkBiome = SetChunkBiome(chunkParent, cIndex, latestTemperature);
                 chunkParent.transform.position = SetChunkPosition(chunkRow, chunkColumn);
                 SetChunkTileMaterial(chunkParent);
                 cIndex++;
@@ -189,7 +200,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
     Vector3 SetChunkPosition(int row, int column) {
-        Vector3 chunkPos = new Vector3(chunkSize.x + (ChunkXConstant * chunkRow), 0f, chunkSize.z + (ChunkZConstant * chunkColumn));
+        Vector3 chunkPos = new Vector3(chunkSize.x + (chunkDistanceXAxis * chunkRow), 0f, chunkSize.z + (chunkDistanceZAxis * chunkColumn));
         return chunkPos;
     }
     void SetChunkParent(GameObject chunk) {
@@ -256,7 +267,7 @@ public class MapGenerator : MonoBehaviour
     }
     Biome SetInitialBiome() {
         biomeSpawnRandom = Random.Range(-0.25f, 0.75f);
-        biomeSpawnRandom = Mathf.Floor(biomeSpawnRandom * 10000) / 10000;
+        biomeSpawnRandom = Mathf.Floor(biomeSpawnRandom * 1000) / 1000;
         lastTemperature = biomeSpawnRandom;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
@@ -280,8 +291,8 @@ public class MapGenerator : MonoBehaviour
     }
     Biome GetNextBiome(GameObject chunk) {
         float divider = Random.Range(0f, 1f);
-        lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider) );
-        lastTemperature = Mathf.Floor(lastTemperature * 10000) / 10000;
+        lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider));
+        lastTemperature = Mathf.Floor(lastTemperature * 1000) / 1000;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
             if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
@@ -307,9 +318,9 @@ public class MapGenerator : MonoBehaviour
     }
     void StoreBiomeData(int i) {
         minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
-        minimumBiomeTemperature = Mathf.Floor(minimumBiomeTemperature * 10000) / 10000;
+        minimumBiomeTemperature = Mathf.Floor(minimumBiomeTemperature * 1000) / 1000;
         maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
-        maximumBiomeTemperature = Mathf.Floor(maximumBiomeTemperature * 10000) / 10000;
+        maximumBiomeTemperature = Mathf.Floor(maximumBiomeTemperature * 1000) / 1000;
         currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
         currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
     }

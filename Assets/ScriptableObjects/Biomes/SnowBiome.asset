@@ -17,7 +17,7 @@ MonoBehaviour:
   rarityPercent: 0
   biomeSpawnData:
     biomeName: snow
-    minChanceSpawn: 0.559
+    minChanceSpawn: 0.56
     maxChanceSpawn: 0.75
     minHeight: 0
     maxHeight: 0
