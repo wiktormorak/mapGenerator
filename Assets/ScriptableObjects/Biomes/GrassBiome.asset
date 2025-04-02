@@ -21,7 +21,7 @@ MonoBehaviour:
     maxChanceSpawn: 0.24
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 400
+    maxBiomeSize: 1200
     tileMaterial: {fileID: 2100000, guid: 0b5c28386cde85aaf9308d45023cb48c, type: 2}
   allowsLand: 1
   allowsMountains: 1

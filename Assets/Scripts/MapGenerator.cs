@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class MapGenerator : MonoBehaviour
     #endregion
     [Header("Map Configuration")]
     #region Configuration Variables
-    public GameObject chunkContainer;
+    public GameObject container;
     public bool isContinuous;
     public Vector3 mapSize;
     public Vector3 mapSizeInChunks;
@@ -33,10 +35,10 @@ public class MapGenerator : MonoBehaviour
     public float totalColumns;
     private int tileCount;
     private int cIndex;
-    private List<GameObject> allChunks;
-    private List<GameObject> tilesUnsorted;
-    private List<Renderer> tileRenderers;
-    private List<GameObject> indexedBiomes;
+    private List<GameObject> allChunks = new List<GameObject>();
+    private List<GameObject> tilesUnsorted = new List<GameObject>();
+    private List<Renderer> tileRenderers = new List<Renderer>();
+    public List<GameObject> indexedBiomes = new List<GameObject>();
     #endregion
     #region Chunk Generation
     private int chunkIndex;
@@ -60,9 +62,18 @@ public class MapGenerator : MonoBehaviour
     private Biome initialBiome;
     private Biome lastBiome;
     private Biome currentBiome;
+    public int biomeIndex;
     private Material currentBiomeMaterial;
     private int currentBiomeMaxSize;
     private float biomeSpawnRandom;
+    #endregion
+    #region Rendering
+    private List<BatchRendererGroup> brg;
+    private Mesh tileMesh;
+    private List<List<BatchID>> batchIDs;
+    private List<List<BatchMaterialID>> batchMaterialIDs;
+    private List<List<Mesh>> meshLists;
+    private List<List<GraphicsBuffer>> transformBuffers = new List<List<GraphicsBuffer>>();
     #endregion
     #region Unity Methods & Un-Important
     void Start()
@@ -75,15 +86,8 @@ public class MapGenerator : MonoBehaviour
             ChunkScheduler();
         }
     }
-    #endregion
-    #region important
-    void GenerateSeed()
-    {
-        seed = Random.Range(-2147483647, 2147483647);
-        Random.InitState(seed);
-    }
-    void InvokeAtStart()
-    {
+    void InvokeAtStart() {
+        tileMesh = tilePrefab.GetComponent<MeshFilter>().sharedMesh;
         StoreBiomeRanges();
         GenerateSeed();
         initialBiome = SetInitialBiome();
@@ -95,11 +99,18 @@ public class MapGenerator : MonoBehaviour
         mapSizeInChunks = new Vector3(Mathf.Round((mapSize.x / chunkSize.x)), Mathf.Round((mapSize.y / chunkSize.y)), Mathf.Round((mapSize.z / chunkSize.z)));
         chunksToProcess += totalChunks;
     }
-    void GetMapSize(){
+    #endregion
+    #region important Methods
+    void GenerateSeed()
+    {
+        seed = Random.Range(-2147483647, 2147483647);
+        Random.InitState(seed);
+    }
+    void GetMapSize() {
         totalRows = mapSize.x;
         totalColumns = mapSize.z;
     }
-    void GetChunkDetailPercent(){
+    void GetChunkDetailPercent() {
         if(chunkDetail == ChunkDetail.tiny){
             chunkSize.x = (((totalRows / totalColumns) * 10f) * 0.3f);
             chunkSize.y = (((totalRows / totalColumns) * 10f) * 0.3f);
@@ -135,7 +146,7 @@ public class MapGenerator : MonoBehaviour
         return tileGap;
     }
     #endregion
-    #region Chunk Generation
+    #region Chunk Generation Methods
     GameObject CreateChunkGameObject(int index) {
         GameObject chunkParent = new GameObject("Chunk " + index);
         chunkParent.AddComponent<ChunkData>();
@@ -145,12 +156,17 @@ public class MapGenerator : MonoBehaviour
     }
     void ChunkScheduler() {
         if (chunksToProcess > 0){
+            /*BatchID batchId = new BatchID();
+            List<BatchID> batchIdList = new List<BatchID>();
+            List<Mesh> meshList = new List<Mesh>();
+            meshLists.Add(meshList);
+            batchIDs.Add(batchIdList)*/;
             for (int i = 0; i < chunksToProcess; i++) {
                 GameObject chunkParent = CreateChunkGameObject(cIndex);
                 Biome chunkBiome = GetNextBiome(chunkParent);
                 chunkParent.name = lastTemperature.ToString();
                 SetChunkBiome(chunkParent,  chunkBiome);
-                SetChunkParent(chunkParent);
+                //SetChunkParent(chunkParent);
                 chunkRow++;
                 #region Change Column
                 if (Mathf.Approximately(chunkRow, mapSizeInChunks.x)){
@@ -177,7 +193,7 @@ public class MapGenerator : MonoBehaviour
         return chunkPos;
     }
     void SetChunkParent(GameObject chunk) {
-        chunk.transform.SetParent(chunkContainer.transform);
+        chunk.transform.SetParent(container.transform);
     }
     void GenerateChunk(GameObject parent, bool chunkInverse, int index) {
         for (int i = 0; i < rowsPerChunk; i++){
@@ -207,28 +223,32 @@ public class MapGenerator : MonoBehaviour
     }
     void CreateTile(GameObject parent, Vector3 pos){
         GameObject tile = Instantiate(tilePrefab, pos, Quaternion.identity);
+        Mesh tileMesh = tile.GetComponent<MeshFilter>().sharedMesh;
         tile.transform.localScale = tileSize;
         tile.transform.eulerAngles = new Vector3(-90f,0f,0f);
-        tile.transform.SetParent(parent.transform); 
+        tile.transform.SetParent(parent.transform);
     }
     #endregion
     #region Biome Utility Methods
-    void AddChunkToBiomeFromIndex(int biomeIndex, GameObject chunk) {
-        GameObject biome = indexedBiomes[biomeIndex];
-        chunk.transform.SetParent(biome.transform);
+    void AddChunkToBiomeFromIndex(GameObject parent, GameObject chunk) {
+        chunk.transform.SetParent(parent.transform);
     }
-    void AddChunksToBiomeFromIndex(int biomeIndex, List<GameObject> chunks) {
-        GameObject biome = indexedBiomes[biomeIndex];
+    void AddChunksToBiomeFromIndex(int index, List<GameObject> chunks) {
+        GameObject biome = indexedBiomes[index];
         foreach (GameObject chunk in chunks){
             chunk.transform.SetParent(biome.transform);
         }
     }
-    GameObject CreateBiomeGameObject(int biomeIndex) {
-        GameObject biomeParent = new GameObject("Biome " + biomeIndex);
-        return biomeParent;
+    void CreateBiomeGameObject(Biome biomeType, int index) {
+        GameObject biomeParent = new GameObject("Biome " + index.ToString() + "(" + biomeType.ToString() + ")");
+        biomeParent.transform.SetParent(container.transform);
+        AddToIndexedBiomes(biomeParent);
+    }
+    void AddToIndexedBiomes(GameObject obj) {
+        indexedBiomes.Add(obj);
     }
     #endregion
-    #region Biome
+    #region Biome Methods
     void StoreBiomeRanges() {
         foreach (Biome biome in biomes){
             biomeSpawnData.Add(biome.biomeSpawnData);
@@ -236,16 +256,15 @@ public class MapGenerator : MonoBehaviour
     }
     Biome SetInitialBiome() {
         biomeSpawnRandom = Random.Range(-0.25f, 0.75f);
+        biomeSpawnRandom = Mathf.Floor(biomeSpawnRandom * 10000) / 10000;
         lastTemperature = biomeSpawnRandom;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
             if (biomeSpawnRandom >= range.minChanceSpawn && biomeSpawnRandom <= range.maxChanceSpawn){
-                minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
-                maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
-                currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
-                currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
+                StoreBiomeData(i);
                 initialBiome = biomes[i];
-                //Debug.Log(biomeSpawnRandom);
+                biomeIndex = 0;
+                CreateBiomeGameObject(initialBiome, biomeIndex);
                 return initialBiome;
             }
         }
@@ -262,18 +281,37 @@ public class MapGenerator : MonoBehaviour
     Biome GetNextBiome(GameObject chunk) {
         float divider = Random.Range(0f, 1f);
         lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider) );
+        lastTemperature = Mathf.Floor(lastTemperature * 10000) / 10000;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
             if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
-                minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
-                maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
-                currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
-                currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
-                currentBiome = biomes[i];
-                return currentBiome;
+                var tempBiome = biomes[i];
+                if (tempBiome != currentBiome){
+                    currentBiome = tempBiome;
+                    StoreBiomeData(i);
+                    currentBiome = biomes[i];
+                    GameObject parent  = indexedBiomes[biomeIndex];
+                    AddChunkToBiomeFromIndex(parent, chunk);
+                    CreateBiomeGameObject(currentBiome, biomeIndex);
+                    biomeIndex++;
+                    return currentBiome;
+                }
+                else if(tempBiome == currentBiome){
+                    GameObject parent  = indexedBiomes[biomeIndex];
+                    AddChunkToBiomeFromIndex(parent, chunk);
+                    return currentBiome;
+                }
             }
         }
         return null;
+    }
+    void StoreBiomeData(int i) {
+        minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
+        minimumBiomeTemperature = Mathf.Floor(minimumBiomeTemperature * 10000) / 10000;
+        maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
+        maximumBiomeTemperature = Mathf.Floor(maximumBiomeTemperature * 10000) / 10000;
+        currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
+        currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
     }
     public List<List<GameObject>> GetSurroundingChunks(GameObject startChunk, int layersToFind) {
         var parentList = new List<List<GameObject>>();
@@ -291,5 +329,8 @@ public class MapGenerator : MonoBehaviour
         }
         return parentList;
     }
+    #endregion
+    #region Rendering Methods
+    
     #endregion
 }

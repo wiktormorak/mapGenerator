@@ -18,10 +18,10 @@ MonoBehaviour:
   biomeSpawnData:
     biomeName: ocean
     minChanceSpawn: 0.36
-    maxChanceSpawn: 0.55
+    maxChanceSpawn: 0.5589
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 750
+    maxBiomeSize: 2000
     tileMaterial: {fileID: 2100000, guid: 236ba63e3b3005fb48e6d67b4aa7bb8e, type: 2}
   allowsLand: 1
   allowsMountains: 0

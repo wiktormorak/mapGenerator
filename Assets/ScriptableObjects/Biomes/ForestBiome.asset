@@ -18,10 +18,10 @@ MonoBehaviour:
   biomeSpawnData:
     biomeName: forest
     minChanceSpawn: -0.25
-    maxChanceSpawn: 0.05
+    maxChanceSpawn: 0.06
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 250
+    maxBiomeSize: 750
     tileMaterial: {fileID: 2100000, guid: d09a835956ebb775a88e66e57acc0485, type: 2}
   allowsLand: 1
   allowsMountains: 0
