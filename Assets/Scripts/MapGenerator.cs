@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -255,6 +257,9 @@ public class MapGenerator : MonoBehaviour
     void CreateBiomeGameObject(Biome biomeType, int index) {
         GameObject biomeParent = new GameObject("Biome " + index.ToString() + "(" + biomeType.ToString() + ")");
         biomeParent.transform.SetParent(container.transform);
+        biomeParent.AddComponent<BiomeData>();
+        biomeParent.GetComponent<BiomeData>().biome = biomeType;
+        biomeParent.GetComponent<BiomeData>().biomeMaterial = biomeType.biomeSpawnData.tileMaterial;
         AddToIndexedBiomes(biomeParent);
     }
     void AddToIndexedBiomes(GameObject obj) {
@@ -358,6 +363,8 @@ public class MapGenerator : MonoBehaviour
     }
     #endregion
     #region Rendering Methods
-    
+    void CreateBiomeBatchRenderer(GameObject biomeParent) {
+        //BatchRendererGroup brg = new BatchRendererGroup(BatchRendererGroup.OnPerformCulling(), IntPtr.Zero);
+    }
     #endregion
 }
