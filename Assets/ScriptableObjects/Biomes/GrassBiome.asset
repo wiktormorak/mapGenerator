@@ -18,7 +18,7 @@ MonoBehaviour:
   biomeSpawnData:
     biomeName: grass
     minChanceSpawn: 0.06
-    maxChanceSpawn: 0.24
+    maxChanceSpawn: 0.249
     minHeight: 0
     maxHeight: 0
     maxBiomeSize: 1200

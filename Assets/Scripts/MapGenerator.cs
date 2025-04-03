@@ -62,9 +62,9 @@ public class MapGenerator : MonoBehaviour
     private float lastTemperature;
     private float minimumBiomeTemperature;
     private float maximumBiomeTemperature;
-    private Biome initialBiome;
-    private Biome lastBiome;
-    private Biome currentBiome;
+    public Biome initialBiome;
+    public Biome lastBiome;
+    public Biome currentBiome;
     public int biomeIndex;
     private Material currentBiomeMaterial;
     private int currentBiomeMaxSize;
@@ -176,6 +176,12 @@ public class MapGenerator : MonoBehaviour
             batchIDs.Add(batchIdList)*/;
             for (int i = 0; i < chunksToProcess; i++) {
                 GameObject chunkParent = CreateChunkGameObject(cIndex);
+                #region First Chunk
+                if (cIndex == 0){
+                    chunkParent.GetComponent<ChunkData>().chunkBiome = initialBiome;
+                    SetChunkTileMaterial(chunkParent);
+                }
+                #endregion
                 Biome chunkBiome = GetNextBiome(chunkParent);
                 chunkParent.name = lastTemperature.ToString();
                 SetChunkBiome(chunkParent,  chunkBiome);
@@ -188,10 +194,6 @@ public class MapGenerator : MonoBehaviour
                 #endregion
                 bool chunkOffset = (chunkColumn & 1) == 1;
                 GenerateChunk(chunkParent, chunkOffset, cIndex);
-                if (cIndex == 0){
-                    chunkParent.GetComponent<ChunkData>().chunkBiome = initialBiome;
-                    SetChunkTileMaterial(chunkParent);
-                }
                 chunkParent.transform.position = SetChunkPosition(chunkRow, chunkColumn);
                 SetChunkTileMaterial(chunkParent);
                 cIndex++;
@@ -274,9 +276,38 @@ public class MapGenerator : MonoBehaviour
             if (biomeSpawnRandom >= range.minChanceSpawn && biomeSpawnRandom <= range.maxChanceSpawn){
                 StoreBiomeData(i);
                 initialBiome = biomes[i];
+                lastBiome = initialBiome;
                 biomeIndex = 0;
                 CreateBiomeGameObject(initialBiome, biomeIndex);
                 return initialBiome;
+            }
+        }
+        return null;
+    }
+    Biome GetNextBiome(GameObject chunk) {
+        float divider = Random.Range(0f, 1f);
+        lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider));
+        lastTemperature = Mathf.Floor(lastTemperature * 1000) / 1000;
+        for (int i = 0; i < biomeSpawnData.Count; i++) {
+            var range = biomeSpawnData[i];
+            if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
+                currentBiome = biomes[i];
+                if (currentBiome != lastBiome){
+                    lastBiome = currentBiome;
+                    StoreBiomeData(i);
+                    currentBiome = biomes[i];
+                    GameObject parent = indexedBiomes[biomeIndex];
+                    CreateBiomeGameObject(currentBiome, biomeIndex);
+                    AddChunkToBiomeFromIndex(parent, chunk);
+                    biomeIndex++;
+                    return currentBiome;
+                }
+                else if(currentBiome == lastBiome){
+                    lastBiome = currentBiome;
+                    GameObject parent = indexedBiomes[biomeIndex];
+                    AddChunkToBiomeFromIndex(parent, chunk);
+                    return currentBiome;
+                }
             }
         }
         return null;
@@ -288,33 +319,6 @@ public class MapGenerator : MonoBehaviour
     }
     void SetChunkBiome(GameObject chunk, Biome biome) {
         chunk.GetComponent<ChunkData>().chunkBiome = biome;
-    }
-    Biome GetNextBiome(GameObject chunk) {
-        float divider = Random.Range(0f, 1f);
-        lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider));
-        lastTemperature = Mathf.Floor(lastTemperature * 1000) / 1000;
-        for (int i = 0; i < biomeSpawnData.Count; i++) {
-            var range = biomeSpawnData[i];
-            if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
-                var tempBiome = biomes[i];
-                if (tempBiome != currentBiome){
-                    currentBiome = tempBiome;
-                    StoreBiomeData(i);
-                    currentBiome = biomes[i];
-                    GameObject parent  = indexedBiomes[biomeIndex];
-                    AddChunkToBiomeFromIndex(parent, chunk);
-                    CreateBiomeGameObject(currentBiome, biomeIndex);
-                    biomeIndex++;
-                    return currentBiome;
-                }
-                else if(tempBiome == currentBiome){
-                    GameObject parent  = indexedBiomes[biomeIndex];
-                    AddChunkToBiomeFromIndex(parent, chunk);
-                    return currentBiome;
-                }
-            }
-        }
-        return null;
     }
     void StoreBiomeData(int i) {
         minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
