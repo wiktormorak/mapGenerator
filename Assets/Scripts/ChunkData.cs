@@ -5,4 +5,5 @@ public class ChunkData : MonoBehaviour
 {
     public int chunkIndex;
     public Biome chunkBiome;
+    public float chunkTemperatureDivider;
 }

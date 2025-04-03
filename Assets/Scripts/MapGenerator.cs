@@ -67,7 +67,7 @@ public class MapGenerator : MonoBehaviour
     public Biome currentBiome;
     public int biomeIndex;
     private Material currentBiomeMaterial;
-    private int currentBiomeMaxSize;
+    public int currentBiomeMaxSize;
     private float biomeSpawnRandom;
     #endregion
     #region Rendering
@@ -267,8 +267,13 @@ public class MapGenerator : MonoBehaviour
             biomeSpawnData.Add(biome.biomeSpawnData);
         }
     }
-    Biome SetInitialBiome() {
-        biomeSpawnRandom = Random.Range(-0.25f, 0.75f);
+    float BiomeMinMaxRandom() {
+        var i = Random.Range(0f, 2.99f);
+        return i;
+    }
+    Biome SetInitialBiome()
+    {
+        biomeSpawnRandom = BiomeMinMaxRandom();
         biomeSpawnRandom = Mathf.Floor(biomeSpawnRandom * 1000) / 1000;
         lastTemperature = biomeSpawnRandom;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
@@ -285,8 +290,13 @@ public class MapGenerator : MonoBehaviour
         return null;
     }
     Biome GetNextBiome(GameObject chunk) {
-        float divider = Random.Range(0f, 1f);
-        lastTemperature -= ((lastTemperature * divider) / (currentBiomeMaxSize * divider));
+        float divider = Random.Range(5f, 150f);
+        if (lastTemperature > 0f){
+            lastTemperature -= (((Random.Range(minimumBiomeTemperature, maximumBiomeTemperature) * divider) / (currentBiomeMaxSize * mapSizeInChunks.x) * divider) / 100f);
+        }
+        else{
+            lastTemperature = BiomeMinMaxRandom();
+        }
         lastTemperature = Mathf.Floor(lastTemperature * 1000) / 1000;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
@@ -299,6 +309,7 @@ public class MapGenerator : MonoBehaviour
                     GameObject parent = indexedBiomes[biomeIndex];
                     CreateBiomeGameObject(currentBiome, biomeIndex);
                     AddChunkToBiomeFromIndex(parent, chunk);
+                    chunk.GetComponent<ChunkData>().chunkTemperatureDivider = divider;
                     biomeIndex++;
                     return currentBiome;
                 }
@@ -306,6 +317,7 @@ public class MapGenerator : MonoBehaviour
                     lastBiome = currentBiome;
                     GameObject parent = indexedBiomes[biomeIndex];
                     AddChunkToBiomeFromIndex(parent, chunk);
+                    chunk.GetComponent<ChunkData>().chunkTemperatureDivider = divider;
                     return currentBiome;
                 }
             }

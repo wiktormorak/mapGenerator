@@ -17,11 +17,11 @@ MonoBehaviour:
   rarityPercent: 0
   biomeSpawnData:
     biomeName: grass
-    minChanceSpawn: 0.06
-    maxChanceSpawn: 0.249
+    minChanceSpawn: 0.65
+    maxChanceSpawn: 1.49
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 1200
+    maxBiomeSize: 1800
     tileMaterial: {fileID: 2100000, guid: 0b5c28386cde85aaf9308d45023cb48c, type: 2}
   allowsLand: 1
   allowsMountains: 1

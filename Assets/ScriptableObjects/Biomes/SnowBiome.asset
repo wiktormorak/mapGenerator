@@ -17,11 +17,11 @@ MonoBehaviour:
   rarityPercent: 0
   biomeSpawnData:
     biomeName: snow
-    minChanceSpawn: 0.56
-    maxChanceSpawn: 0.75
+    minChanceSpawn: 2.2
+    maxChanceSpawn: 2.99
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 1250
+    maxBiomeSize: 1500
     tileMaterial: {fileID: 2100000, guid: 044ff1747afa9bab6b271665fa1845d5, type: 2}
   allowsLand: 1
   allowsMountains: 0

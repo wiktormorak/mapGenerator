@@ -17,11 +17,11 @@ MonoBehaviour:
   rarityPercent: 0
   biomeSpawnData:
     biomeName: desert
-    minChanceSpawn: 0.25
-    maxChanceSpawn: 0.35
+    minChanceSpawn: 0
+    maxChanceSpawn: 0.349
     minHeight: 0
     maxHeight: 0
-    maxBiomeSize: 500
+    maxBiomeSize: 1200
     tileMaterial: {fileID: 2100000, guid: 009f9593eee14f2f39ec6f1e6b8f6e2e, type: 2}
   allowsLand: 1
   allowsMountains: 0

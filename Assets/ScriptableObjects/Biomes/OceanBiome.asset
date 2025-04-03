@@ -17,8 +17,8 @@ MonoBehaviour:
   rarityPercent: 0
   biomeSpawnData:
     biomeName: ocean
-    minChanceSpawn: 0.36
-    maxChanceSpawn: 0.559
+    minChanceSpawn: 1.49
+    maxChanceSpawn: 2.19
     minHeight: 0
     maxHeight: 0
     maxBiomeSize: 2000
