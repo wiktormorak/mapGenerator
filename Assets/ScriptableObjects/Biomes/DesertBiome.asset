@@ -19,9 +19,8 @@ MonoBehaviour:
     biomeName: desert
     minChanceSpawn: 0
     maxChanceSpawn: 0.349
-    minHeight: 0
-    maxHeight: 0
-    maxBiomeSize: 1200
+    maxBiomeSize: {x: 50, y: 0, z: 50}
+    minBiomeSize: {x: 20, y: 0, z: 20}
     tileMaterial: {fileID: 2100000, guid: 009f9593eee14f2f39ec6f1e6b8f6e2e, type: 2}
   allowsLand: 1
   allowsMountains: 0

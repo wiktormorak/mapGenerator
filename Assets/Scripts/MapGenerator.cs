@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -19,7 +21,6 @@ public class MapGenerator : MonoBehaviour
     public Vector2 tilePadding;
     public float tileDistanceXAxis;
     public float tileDistanceZAxis;
-    
     #endregion
     [Header("Map Configuration")]
     #region Configuration Variables
@@ -55,6 +56,7 @@ public class MapGenerator : MonoBehaviour
     private float offset;
     private bool offsetRow;
     private bool chunksComplete;
+    private Vector3 lastChunkPosition;
     #endregion
     [Header("Biome Configuration")]
     #region Biomes
@@ -69,11 +71,19 @@ public class MapGenerator : MonoBehaviour
     public Biome currentBiome;
     public int biomeIndex;
     private Material currentBiomeMaterial;
-    public int currentBiomeMaxSize;
+    private int currentBiomeMaxSize;
+    private int currentBiomeMinSize;
+    private int currentBiomeMaxSizeInChunks;
+    private int currentBiomeMinSizeInChunks;
+    private float currentBiomeMaxWidth;
+    private float currentBiomeMinWidth;
+    private float currentBiomeMaxLength;
+    private float currentBiomeMinLength;
+    private float cachedBiomeSize;
     private float biomeSpawnRandom;
     #endregion
     #region Rendering
-    private List<BatchRendererGroup> brg;
+    private List<BatchRendererGroup> brgs;
     private Mesh tileMesh;
     private List<List<BatchID>> batchIDs;
     private List<List<BatchMaterialID>> batchMaterialIDs;
@@ -95,7 +105,6 @@ public class MapGenerator : MonoBehaviour
         tileMesh = tilePrefab.GetComponent<MeshFilter>().sharedMesh;
         StoreBiomeRanges();
         GenerateSeed();
-        initialBiome = SetInitialBiome();
         tileDistanceXAxis = FindTileGapXAxis(tileSize.x);
         tileDistanceZAxis = FindTileGapZAxis(tileSize.x);
         GetMapSize();
@@ -104,12 +113,22 @@ public class MapGenerator : MonoBehaviour
         chunkDistanceZAxis = FindChunkGapZAxis(chunkSize.z);
         GetTotalChunks();
         mapSizeInChunks = new Vector3(Mathf.Round((mapSize.x / chunkSize.x)), Mathf.Round((mapSize.y / chunkSize.y)), Mathf.Round((mapSize.z / chunkSize.z)));
+        initialBiome = SetInitialBiome();
         chunksToProcess += totalChunks;
+    }
+    bool IsEven(int value) {
+        return (value & 1) == 0;
+    }
+    bool IsOdd(int value) {
+        return (value & 1) == 1;
+    }
+    float RoundToThird(float value) {
+        value = Mathf.Floor((value * 1000) / 1000);
+        return value;
     }
     #endregion
     #region important Methods
-    void GenerateSeed()
-    {
+    void GenerateSeed() {
         seed = Random.Range(-2147483647, 2147483647);
         Random.InitState(seed);
     }
@@ -163,7 +182,7 @@ public class MapGenerator : MonoBehaviour
     #endregion
     #region Chunk Generation Methods
     GameObject CreateChunkGameObject(int index) {
-        GameObject chunkParent = new GameObject("Chunk " + index);
+        GameObject chunkParent = new GameObject();
         chunkParent.AddComponent<ChunkData>();
         chunkParent.GetComponent<ChunkData>().chunkIndex = index;
         chunkParent.transform.localScale = chunkSize;
@@ -171,17 +190,16 @@ public class MapGenerator : MonoBehaviour
     }
     void ChunkScheduler() {
         if (chunksToProcess > 0){
-            /*BatchID batchId = new BatchID();
-            List<BatchID> batchIdList = new List<BatchID>();
-            List<Mesh> meshList = new List<Mesh>();
-            meshLists.Add(meshList);
-            batchIDs.Add(batchIdList)*/;
             for (int i = 0; i < chunksToProcess; i++) {
                 GameObject chunkParent = CreateChunkGameObject(cIndex);
                 #region First Chunk
                 if (cIndex == 0){
                     chunkParent.GetComponent<ChunkData>().chunkBiome = initialBiome;
                     SetChunkTileMaterial(chunkParent);
+                    cachedBiomeSize = Random.Range(currentBiomeMinWidth, currentBiomeMaxWidth);
+                    Debug.Log(currentBiomeMinWidth);
+                    Debug.Log(currentBiomeMaxWidth);
+                    Debug.Log(cachedBiomeSize);
                 }
                 #endregion
                 Biome chunkBiome = GetNextBiome(chunkParent);
@@ -189,21 +207,21 @@ public class MapGenerator : MonoBehaviour
                 SetChunkBiome(chunkParent,  chunkBiome);
                 chunkRow++;
                 #region Change Column
-                if (Mathf.Approximately(chunkRow, mapSizeInChunks.x)){
+                if (Mathf.Approximately(chunkRow, cachedBiomeSize)) {
                     chunkRow = 0;
                     chunkColumn++;
                 }
                 #endregion
                 bool chunkOffset = (chunkColumn & 1) == 1;
                 GenerateChunk(chunkParent, chunkOffset, cIndex);
-                chunkParent.transform.position = SetChunkPosition(chunkRow, chunkColumn);
+                chunkParent.transform.position = SetChunkPosition();
                 SetChunkTileMaterial(chunkParent);
                 cIndex++;
                 chunksToProcess--;
             }
         }
     }
-    Vector3 SetChunkPosition(int row, int column) {
+    Vector3 SetChunkPosition() {
         Vector3 chunkPos = new Vector3(chunkSize.x + (chunkDistanceXAxis * chunkRow), 0f, chunkSize.z + (chunkDistanceZAxis * chunkColumn));
         return chunkPos;
     }
@@ -238,7 +256,7 @@ public class MapGenerator : MonoBehaviour
     }
     void CreateTile(GameObject parent, Vector3 pos){
         GameObject tile = Instantiate(tilePrefab, pos, Quaternion.identity);
-        Mesh tileMesh = tile.GetComponent<MeshFilter>().sharedMesh;
+        //Mesh tileMesh = tile.GetComponent<MeshFilter>().sharedMesh;
         tile.transform.localScale = tileSize;
         tile.transform.eulerAngles = new Vector3(-90f,0f,0f);
         tile.transform.SetParent(parent.transform);
@@ -255,7 +273,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
     void CreateBiomeGameObject(Biome biomeType, int index) {
-        GameObject biomeParent = new GameObject("Biome " + index.ToString() + "(" + biomeType.ToString() + ")");
+        GameObject biomeParent = new GameObject("Biome " + index.ToString() + "(" + biomeType.name + ")");
         biomeParent.transform.SetParent(container.transform);
         biomeParent.AddComponent<BiomeData>();
         biomeParent.GetComponent<BiomeData>().biome = biomeType;
@@ -276,10 +294,9 @@ public class MapGenerator : MonoBehaviour
         var i = Random.Range(0f, 2.99f);
         return i;
     }
-    Biome SetInitialBiome()
-    {
+    Biome SetInitialBiome() {
         biomeSpawnRandom = BiomeMinMaxRandom();
-        biomeSpawnRandom = Mathf.Floor(biomeSpawnRandom * 1000) / 1000;
+        //biomeSpawnRandom = RoundToThird(biomeSpawnRandom);
         lastTemperature = biomeSpawnRandom;
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
@@ -295,14 +312,17 @@ public class MapGenerator : MonoBehaviour
         return null;
     }
     Biome GetNextBiome(GameObject chunk) {
-        float divider = Random.Range(5f, 150f);
-        if (lastTemperature > 0f){
-            lastTemperature -= (((Random.Range(minimumBiomeTemperature, maximumBiomeTemperature) * divider) / (currentBiomeMaxSize * mapSizeInChunks.x) * divider) / 100f);
+        float divider = Random.Range(15f, 75f);
+        if (lastTemperature > 0f) {
+            lastTemperature -= (((Random.Range(minimumBiomeTemperature, maximumBiomeTemperature) / divider) * Random.Range(currentBiomeMinLength, currentBiomeMaxLength) / divider) / 10f);
         }
         else{
             lastTemperature = BiomeMinMaxRandom();
         }
-        lastTemperature = Mathf.Floor(lastTemperature * 1000) / 1000;
+        //Debug.Log((((Random.Range(minimumBiomeTemperature, maximumBiomeTemperature) * divider) / ((currentBiomeMinLength * currentBiomeMaxLength)) * divider) / 100f));
+        //lastTemperature = RoundToThird(lastTemperature);
+        chunk.GetComponent<ChunkData>().chunkTemperature = lastTemperature;
+        chunk.name = lastTemperature.ToString();
         for (int i = 0; i < biomeSpawnData.Count; i++) {
             var range = biomeSpawnData[i];
             if (lastTemperature >= range.minChanceSpawn && lastTemperature <= range.maxChanceSpawn){
@@ -339,11 +359,16 @@ public class MapGenerator : MonoBehaviour
     }
     void StoreBiomeData(int i) {
         minimumBiomeTemperature = biomeSpawnData[i].minChanceSpawn;
-        minimumBiomeTemperature = Mathf.Floor(minimumBiomeTemperature * 1000) / 1000;
+        //minimumBiomeTemperature = RoundToThird(minimumBiomeTemperature);
         maximumBiomeTemperature = biomeSpawnData[i].maxChanceSpawn;
-        maximumBiomeTemperature = Mathf.Floor(maximumBiomeTemperature * 1000) / 1000;
+        //maximumBiomeTemperature = RoundToThird(maximumBiomeTemperature);
         currentBiomeMaterial = biomeSpawnData[i].tileMaterial;
-        currentBiomeMaxSize = biomeSpawnData[i].maxBiomeSize;
+        currentBiomeMaxSizeInChunks = (currentBiomeMaxSize / (int)mapSizeInChunks.x);
+        currentBiomeMinSizeInChunks = (currentBiomeMinSize / (int)mapSizeInChunks.x);
+        currentBiomeMaxWidth = biomeSpawnData[i].maxBiomeSize.x;
+        currentBiomeMinWidth = biomeSpawnData[i].maxBiomeSize.x;
+        currentBiomeMaxLength = biomeSpawnData[i].minBiomeSize.z;
+        currentBiomeMinLength = biomeSpawnData[i].minBiomeSize.z;
     }
     public List<List<GameObject>> GetSurroundingChunks(GameObject startChunk, int layersToFind) {
         var parentList = new List<List<GameObject>>();
@@ -363,8 +388,29 @@ public class MapGenerator : MonoBehaviour
     }
     #endregion
     #region Rendering Methods
-    void CreateBiomeBatchRenderer(GameObject biomeParent) {
-        //BatchRendererGroup brg = new BatchRendererGroup(BatchRendererGroup.OnPerformCulling(), IntPtr.Zero);
+    /*void CreateBiomeBatchRenderer(GameObject biomeParent, Material biomeTileMaterial) {
+        BatchRendererGroup brg = new BatchRendererGroup(OnPerformCulling, IntPtr.Zero);
+        brgs.Add(brg);
+        foreach (GameObject chunk in biomeParent.transform){
+            GraphicsBuffer gBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, (int)tilesPerChunk, 64);
+            Matrix4x4[] transforms = new Matrix4x4[(int)tilesPerChunk];
+            NativeArray<MetadataValue> batchMetaData = new NativeArray<MetadataValue>((int)tilesPerChunk * 2, Allocator.Persistent);
+            BatchMeshID bMeshId = brg.RegisterMesh(tileMesh);
+            BatchMaterialID bMaterialId = brg.RegisterMaterial(biomeTileMaterial);
+            for (int i = 0; i < chunk.transform.childCount; i++) {
+                Mesh tileMesh = chunk.transform.GetChild(i).GetComponent<MeshFilter>().sharedMesh;
+                Vector3 pos = new Vector3(chunk.transform.GetChild(i).transform.position.x, chunk.transform.GetChild(i).transform.position.y, chunk.transform.GetChild(i).transform.position.z);
+                transforms[i] = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one);
+                batchMetaData[i * 2] = new MetadataValue{NameID = Shader.PropertyToID("bMeshId"), Value = 0};
+                batchMetaData[i * 2 + 1] = new MetadataValue{NameID = Shader.PropertyToID("bMaterialId"), Value = 0};
+            }
+            gBuffer.SetData(transforms);
+            BatchID bId = brg.AddBatch(batchMetaData, gBuffer.bufferHandle);
+            //BatchDrawCommand(bId);
+        }
     }
+    private JobHandle OnPerformCulling(BatchRendererGroup rendererGroup, ref BatchCullingContext cullingContext) {
+        return default;
+    }*/
     #endregion
 }

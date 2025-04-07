@@ -18,9 +18,10 @@ public class Biome : ScriptableObject
         public string biomeName;
         public float minChanceSpawn;
         public float maxChanceSpawn;
-        public float minHeight;
-        public float maxHeight;
-        public int maxBiomeSize;
+        public Vector3 maxBiomeSize;
+        public Vector3 minBiomeSize;
+        //public int minBiomeSize; replaced with Vector3 parameters with the same name (now set in total chunks)
+        //public int maxBiomeSize; replaced with Vector3 parameters with the same name (now set in total chunks)
         public Material tileMaterial;
     }
 

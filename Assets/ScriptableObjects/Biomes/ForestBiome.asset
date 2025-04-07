@@ -19,12 +19,11 @@ MonoBehaviour:
     biomeName: forest
     minChanceSpawn: 0.35
     maxChanceSpawn: 0.649
-    minHeight: 0
-    maxHeight: 0
-    maxBiomeSize: 1500
+    maxBiomeSize: {x: 60, y: 0, z: 60}
+    minBiomeSize: {x: 20, y: 0, z: 20}
     tileMaterial: {fileID: 2100000, guid: d09a835956ebb775a88e66e57acc0485, type: 2}
   allowsLand: 1
-  allowsMountains: 0
+  allowsMountains: 1
   allowsIslands: 0
   allowsContinental: 0
   allowsSandyBeaches: 0
