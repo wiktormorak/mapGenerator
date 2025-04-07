@@ -88,6 +88,7 @@ public class MapGen : MonoBehaviour
         tileDistanceXAxis = FindTileGapXAxis(tileSize.x);
         tileDistanceZAxis = FindTileGapZAxis(tileSize.x);
         GetMapSize();
+        GetChunkSize();
         chunkDistanceXAxis = FindChunkGapXAxis(chunkSize.x);
         chunkDistanceZAxis = FindChunkGapZAxis(chunkSize.z);
         GetTotalChunks();
@@ -202,7 +203,7 @@ public class MapGen : MonoBehaviour
         chunk.transform.SetParent(parent.transform);
     }
     void CreateBiomeGameObject(Biome biomeType, float index) {
-        GameObject biomeParent = new GameObject("Biome " + index.ToString() + "(" + biomeType.name + ")");
+        GameObject biomeParent = new GameObject("Biome " + index.ToString());
         currentBiomeObject = biomeParent;
         StoreBiomeData(biomeParent, biomeType);
         biomeParent.transform.SetParent(container.transform);
@@ -221,7 +222,8 @@ public class MapGen : MonoBehaviour
         for(int i = 0; i < biomes.Count; i++){
             var biome = biomes[i];
             if (value >= biome.biomeSpawnData.minChanceSpawn && value <= biome.biomeSpawnData.maxChanceSpawn){
-                return biome;
+                Biome foundBiome = biomes[i];
+                return foundBiome;
             }
         }
         return null;
@@ -251,14 +253,15 @@ public class MapGen : MonoBehaviour
     Biome GetInitialBiome() {
         var temperature = BiomeMinMaxRandom();
         lastTemperature = temperature;
-        var biome = GetBiome(temperature);
+        Biome biome = GetBiome(temperature);
+        Debug.Log(biome);
         biomeIndex = 0f;
         CreateBiomeGameObject(biome, biomeIndex);
         return biome;
     }
     Biome GetNextBiome(GameObject chunk) {
         float temperature = TemperatureCalculation();
-        var biome = GetBiome(temperature);
+        Biome biome = GetBiome(temperature);
         if (biome != lastBiome){
             biomeIndex++;
             lastBiome = biome;
